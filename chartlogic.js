@@ -1,62 +1,21 @@
-var margin = {top: 20, right: 30, bottom: 30, left: 40};
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+var svg = d3.select("svg");
+var circle  = svg.selectAll("circle");
+circle.style("fill", "steelblue");
 
-var y = d3.scale.linear()
-    .range([height, 0]);
+circle = circle.data([32, 57, 112, 293]);
+circle.attr("r", function(d) { return Math.sqrt(d);});
+circle.attr("cx", function(d, i) { return i * 100 + 30; });
 
-var x = d3.scale.ordinal()
-    // .domain(["A", "B", "C", "D", "E", "F"])
-    .rangeRoundBands([0, width], 0.1);
+var circleEnter = circle.enter().append("circle");
+circleEnter.attr("r", function(d) { return Math.sqrt(d);})
+    .attr("cx", function(d, i) { return i * 100 + 30; })
+    .attr("cy", "60")
+    .style("fill", "steelblue");
 
-var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom");
+var linefunction = d3.svg.line()
+    .x(function(d, i) { return i * 100 + 30;})
+    .y(function(d) { return 60;});
 
-var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left")
-    .ticks(10, "%");
+svg.append("path").datum([32, 57, 112, 293]).attr("class", "line").attr("d", linefunction);
 
-var chart = d3.select(".chart")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.bottom + margin.top)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-
-d3.tsv("data.tsv", type, function(error, data) {
-  x.domain(data.map(function(d) { return d.name; }));
-  y.domain( [0, d3.max( data.map(function(d){return d.value;}) ) ] );
-
-  chart.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
-
-  chart.append("g")
-      .attr("class", "y axis")
-      .call(yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .text("frequency");
-
-
-  var bar = chart.selectAll(".bar")
-        .data(data)
-    .enter().append("rect")
-      .attr("class", "bar")
-      .attr("x", function(d) { return x(d.name);})
-      .attr("y", function(d) { return y(d.value); })
-      .attr("height", function(d) { return height - y(d.value); })
-      .attr("width", x.rangeBand());
-
-});
-
-function type(d) {
-  d.value = +d.value; // coerce to number
-  return d;
-}
+// circle.data([32,57]).exit().transition().duration(1000).delay(100).style("opacity", "0").remove();
