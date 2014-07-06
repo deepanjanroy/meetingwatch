@@ -3,3 +3,19 @@
   stroke: steelblue;
   stroke-width: 2px;
 }
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  font: 10px sans-serif;
+}
+
+.dataPoint circle,
+.newPoint circle {
+  fill: steelblue;
+}
