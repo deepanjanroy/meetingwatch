@@ -30,3 +30,27 @@ var deepRound = function (num, decimalPlaces) {
 
   return num;
 }
+
+var parsedTime = function(rawMilisecs) {
+  var milisecs = rawMilisecs % 1000;
+  var seconds = Math.floor(rawMilisecs / 1000) % 60;
+  var minutes = Math.floor(rawMilisecs / 1000 / 60);
+  return {"minutes": minutes,
+          "seconds": seconds,
+          "milisecs": milisecs
+        };
+}
+
+var twoDFormat = function(num) {
+  var negative = num < 0 ? true : false;
+  var abs_num = Math.abs(num);
+  var s;
+
+  if (abs_num >= 0 && abs_num <= 9) {
+    s = "0" + abs_num;
+  } else {
+    s = "" + abs_num;
+  }
+
+  return negative ? "-" + s : s;
+}

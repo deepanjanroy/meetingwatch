@@ -23,12 +23,11 @@ var yAxis = d3.svg.axis()
     .orient("left");
 
 /* Chart frame */
-var chart = d3.select("body").append("svg")
+var chart = d3.select(".chart").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.bottom + margin.top)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
 
 var date_parser = d3.time.format("%Y-%m-%d");
 var n_data = {date: date_parser.parse("2014-07-29"), value: 0};
@@ -135,14 +134,15 @@ d3.tsv("data.tsv", function(error, data){
 
   setInterval(pulse_last_data, 500);
 
-  firstTime = new Date().getTime() / 1000;
+  firstTime = new Date().getTime();
 
-  var update_new_point = function(seconds) {
+  var update_new_point = function(miliseconds) {
     var elm = chart.selectAll(".dataPoint")[0].pop();
     if (elm === null) {
       return;
     }
 
+    var seconds = miliseconds / 1000;
     new_data = data[data.length - 1];
     new_data.value = seconds;
     elm.setAttribute("cy", y(new_data.value));
@@ -152,11 +152,18 @@ d3.tsv("data.tsv", function(error, data){
 
   };
 
-  setInterval(function () {
-    var cur_time = new Date().getTime() / 1000;
-    var time_passed = deepRound(cur_time - firstTime);
+  var update_time_text = function(time_passed) {
+    var t = parsedTime(time_passed);
+    document.getElementById("timeMain").textContent = ""
+        + twoDFormat(t.minutes) + ":" + twoDFormat(t.seconds);
+    document.getElementById("timeMilis").textContent = "" + t.milisecs;
+  }
 
-    document.getElementById("timerId").textContent = time_passed;
+  setInterval(function () {
+    var cur_time = new Date().getTime();
+    var time_passed = cur_time - firstTime;
+
+    update_time_text(time_passed);
     update_new_point(time_passed);
   }, 10);
 

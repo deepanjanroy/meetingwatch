@@ -20,6 +20,38 @@
   fill: steelblue;
 }
 
-.timer {
+.timerContainer {
+	width: 200px;
+	float: left;
+}
 
+.timerContainer .timeWrapper {
+	margin-left: auto;
+	margin-right: auto;
+	overflow: hidden;
+	height: 100%;
+}
+
+#timeMain {
+	font-size: 40px;
+	font-family: monospace;
+	color: rgb(184, 53, 53);
+	float: left;
+	height: 100%;
+}
+
+#timeMilisContainer {
+	float: left;
+	height: 100%;
+}
+
+#timeMilis {
+	font-size: 20px;
+	font-family: monospace;
+	color: rgb(184, 53, 53);
+	margin-top: 13px;
+}
+
+.chart {
+	float: left;
 }
