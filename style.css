@@ -55,3 +55,17 @@
 .chart {
 	float: left;
 }
+
+#startStop {
+	float: left;
+	width: 100px;
+	height: 30px;
+	font-family: monospace;
+	background-color: rgb(38, 77, 86);
+	color: white;
+	text-align: center;
+}
+
+#startStop:hover{
+	background-color: rgb(140, 30, 99);
+}

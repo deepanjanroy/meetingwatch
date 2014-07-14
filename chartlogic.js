@@ -74,6 +74,21 @@ d3.tsv("data.tsv", function(error, data){
           .attr("r", r);
   }
 
+  function stop_pulse (intervalID) {
+    clearInterval(intervalID);
+
+    var color = colors[0];
+    var r = radius[0];
+    var dataPoints = chart.selectAll(".dataPoint")[0]
+    var elm = d3.select(dataPoints.pop());
+
+    elm.transition()
+        .duration(500)
+        .style("fill", color)
+        .attr("r", r);
+
+  }
+
   // Setting domain
   var max_date_data = lambdaMax(data, function(d) {  return d.date.getTime(); });
   var max_date = new Date(max_date_data.date);
@@ -108,11 +123,6 @@ d3.tsv("data.tsv", function(error, data){
       .attr("r", "4")
       .attr("fill", "steelblue");
 
-
-
-  add_data(n_data);
-  setTimeout(function() { add_data(m_data);}, 3000);
-
   var lineFunction = d3.svg.line()
                           .x(function(d) { return x(new Date(d.date)); })
                           .y(function(d) { return y(d.value); })
@@ -131,11 +141,6 @@ d3.tsv("data.tsv", function(error, data){
   var radius = ["4", "6"];
   var colindex = 0;
 
-
-  setInterval(pulse_last_data, 500);
-
-  firstTime = new Date().getTime();
-
   var update_new_point = function(miliseconds) {
     var elm = chart.selectAll(".dataPoint")[0].pop();
     if (elm === null) {
@@ -143,7 +148,7 @@ d3.tsv("data.tsv", function(error, data){
     }
 
     var seconds = miliseconds / 1000;
-    new_data = data[data.length - 1];
+    var new_data = data[data.length - 1];
     new_data.value = seconds;
     elm.setAttribute("cy", y(new_data.value));
 
@@ -159,12 +164,29 @@ d3.tsv("data.tsv", function(error, data){
     document.getElementById("timeMilis").textContent = "" + t.milisecs;
   }
 
-  setInterval(function () {
-    var cur_time = new Date().getTime();
-    var time_passed = cur_time - firstTime;
+  startTimer = function () {
 
-    update_time_text(time_passed);
-    update_new_point(time_passed);
-  }, 10);
+    add_data(n_data);
+
+    intervalPulse = setInterval(pulse_last_data, 500);
+
+    firstTime = new Date().getTime();
+
+    intervalTimer = setInterval(function () {
+      var cur_time = new Date().getTime();
+      var time_passed = cur_time - firstTime;
+
+      update_time_text(time_passed);
+      update_new_point(time_passed);
+    }, 10);
+  }
+
+  stopTimer = function () {
+
+    clearInterval(intervalTimer);
+    stop_pulse(intervalPulse);
+    var new_data = data[data.length - 1];
+    return "Recorded time: " + new_data.value + " miliseconds";
+  }
 
 });
