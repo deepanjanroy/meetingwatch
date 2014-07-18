@@ -8,13 +8,13 @@ var width = 960 - margin.left - margin.right,
 var y = d3.scale.linear()
     .range([height, 0]);
 
-var x = d3.time.scale()
-    .range([0,width]);
+var x = d3.scale.ordinal()
+    .rangePoints([0,width], 0.5);
 
 /* Axes */
 var xAxis = d3.svg.axis()
     .scale(x)
-    .ticks(7) // Move this somewhere else
+    // .ticks(7) // Move this somewhere else
     .orient("bottom");
 
 
@@ -30,30 +30,42 @@ var chart = d3.select(".chart").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var date_parser = d3.time.format("%Y-%m-%d");
-var n_data = {date: date_parser.parse("2014-07-29"), value: 0};
-var m_data = {date: date_parser.parse("2014-07-30"), value: 0};
+var n_data = {date: date_parser(new Date()), value: 0};
 
 
-// Async call to data.tsv
-d3.tsv("data.tsv", function(error, data){
+d3.xhr("/data", function(error, xreq){
   if (error != null) {
     alert("Something terrible happened: error on console.");
     console.log(error);
     return;
   }
 
+  data = JSON.parse(xreq.response);
+
   data.forEach(function(d) {
-    d.value = +d.value;
-    d.date = new date_parser.parse(d.date);
+    d.value = +d.value / 1000;
+    // d.date = new date_parser.parse(d.date);
   });
 
 
   var add_data = function (d) {
     data.push(d);
-    chart.selectAll(".dataPoint", function(d) { return d.date.toDateString(); })
+    console.log(data);
+    x.domain(data.map(function(d) {return d.date;}));
+
+    d3.select("g.x.axis").transition().call(xAxis);
+
+    chart.selectAll(".dataPoint", function(d) { return d.date; })
         .data(data)
       .enter().append("circle")
         .attr("class", "dataPoint")
+        .attr("cx", function(d) { return x(d.date);})
+        .attr("cy", function(d) { return y(d.value);})
+        .attr("r", "4")
+        .attr("fill", "steelblue");
+
+    chart.selectAll("circle.dataPoint", function(d) { return d.date; })
+        .transition()
         .attr("cx", function(d) { return x(d.date);})
         .attr("cy", function(d) { return y(d.value);})
         .attr("r", "4")
@@ -84,18 +96,13 @@ d3.tsv("data.tsv", function(error, data){
 
     elm.transition()
         .duration(500)
+        .ease("elastic")
         .style("fill", color)
         .attr("r", r);
 
   }
 
-  // Setting domain
-  var max_date_data = lambdaMax(data, function(d) {  return d.date.getTime(); });
-  var max_date = new Date(max_date_data.date);
-  var lower_date = new Date(max_date.getFullYear(), max_date.getMonth(), max_date.getDate() - 5);
-  var upper_date = new Date(max_date.getFullYear(), max_date.getMonth(), max_date.getDate() + 2);
-
-  x.domain([lower_date, upper_date]);
+  x.domain(data.map(function (d) {return d.date;}));
   y.domain([0, Math.max(d3.max(data, function(d) { return d.value; }), 30*60)]);
 
   // Adding axes
@@ -123,14 +130,14 @@ d3.tsv("data.tsv", function(error, data){
       .attr("r", "4")
       .attr("fill", "steelblue");
 
-  var lineFunction = d3.svg.line()
-                          .x(function(d) { return x(new Date(d.date)); })
-                          .y(function(d) { return y(d.value); })
+  lineFunction = d3.svg.line()
+                          .x(function(circ) { return +circ.getAttribute("cx"); })
+                          .y(function(circ) { return +circ.getAttribute("cy"); })
                           .interpolate("linear");
 
   chart.insert("path", ":first-child")
         .attr("id", "thePath")
-        .attr("d", lineFunction(data))
+        .attr("d", lineFunction(d3.selectAll(".dataPoint")[0]))
         .attr("stroke", "steelblue")
        .attr("stroke-width", 2)
        .attr("fill", "none");
@@ -153,7 +160,7 @@ d3.tsv("data.tsv", function(error, data){
     elm.setAttribute("cy", y(new_data.value));
 
     d3.select("#thePath")
-        .attr("d", lineFunction(data));
+        .attr("d", lineFunction(d3.selectAll(".dataPoint")[0]));
 
   };
 
