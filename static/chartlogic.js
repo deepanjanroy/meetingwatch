@@ -30,17 +30,15 @@ var chart = d3.select(".chart").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var date_parser = d3.time.format("%Y-%m-%d");
-var n_data = {date: date_parser(new Date()), value: 0};
 
 
-d3.xhr("/data", function(error, xreq){
+
+d3.json("/data", function(error, data){
   if (error != null) {
     alert("Something terrible happened: error on console.");
     console.log(error);
     return;
   }
-
-  data = JSON.parse(xreq.response);
 
   data.forEach(function(d) {
     d.value = +d.value / 1000;
@@ -48,9 +46,8 @@ d3.xhr("/data", function(error, xreq){
   });
 
 
-  var add_data = function (d) {
+  function add_data (d) {
     data.push(d);
-    console.log(data);
     x.domain(data.map(function(d) {return d.date;}));
 
     d3.select("g.x.axis").transition().call(xAxis);
@@ -58,6 +55,7 @@ d3.xhr("/data", function(error, xreq){
     chart.selectAll(".dataPoint", function(d) { return d.date; })
         .data(data)
       .enter().append("circle")
+        .transition()
         .attr("class", "dataPoint")
         .attr("cx", function(d) { return x(d.date);})
         .attr("cy", function(d) { return y(d.value);})
@@ -72,6 +70,26 @@ d3.xhr("/data", function(error, xreq){
         .attr("fill", "steelblue");
 
   }
+
+  function delete_data (date) {
+    data = data.filter(function (elm) { return elm.date != date; });
+    x.domain(data.map(function(d) {return d.date;}));
+
+    d3.select("g.x.axis").transition().call(xAxis);
+
+    chart.selectAll(".dataPoint", function(d) { return d.date; })
+        .data(data)
+      .exit().remove();
+
+    chart.selectAll("circle.dataPoint", function(d) { return d.date; })
+        .transition()
+        .attr("cx", function(d) { return x(d.date);})
+        .attr("cy", function(d) { return y(d.value);})
+        .attr("r", "4")
+        .attr("fill", "steelblue");
+
+  }
+
 
   function pulse_last_data() {
       colindex = ( colindex + 1 ) % 2;
@@ -128,7 +146,12 @@ d3.xhr("/data", function(error, xreq){
       .attr("cx", function(d) { return x(d.date);})
       .attr("cy", function(d) { return y(d.value);})
       .attr("r", "4")
-      .attr("fill", "steelblue");
+      .attr("fill", "steelblue")
+      .append("svg:title")
+      .text(function(d) {
+        pt = parsedTime(d.value * 1000);
+        return twoDFormat(pt.minutes) + ":" + twoDFormat(pt.seconds);
+      });
 
   lineFunction = d3.svg.line()
                           .x(function(circ) { return +circ.getAttribute("cx"); })
@@ -173,7 +196,11 @@ d3.xhr("/data", function(error, xreq){
 
   startTimer = function () {
 
-    add_data(n_data);
+    var today = date_parser(new Date());
+    var new_data = {date: today, value: 0};
+
+    delete_data(today);
+    add_data(new_data);
 
     intervalPulse = setInterval(pulse_last_data, 500);
 
@@ -193,7 +220,22 @@ d3.xhr("/data", function(error, xreq){
     clearInterval(intervalTimer);
     stop_pulse(intervalPulse);
     var new_data = data[data.length - 1];
+    var postXhr = d3.xhr("/data")
+                    .header("Content-Type", "application/json")
+                    .post(JSON.stringify(new_data));
     return "Recorded time: " + new_data.value + " miliseconds";
+  }
+
+  validateStartCondition = function () {
+    var today = date_parser(new Date());
+    all_dates = data.map(function (elm) { return elm.date;});
+    if (all_dates.contains(today)){
+      var r = window.confirm("This will override the previously recorded time to today's meeting. Are you sure you want to continue?");
+      if (!r) {
+        return false;
+      }
+    }
+    return true;
   }
 
 });

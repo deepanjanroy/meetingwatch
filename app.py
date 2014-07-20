@@ -4,6 +4,7 @@ from flask import Response
 import sqlite3
 import json
 
+from utils import toMilisecs
 
 # HACK
 
@@ -67,17 +68,25 @@ app = Flask(__name__)
 def hello():
     return app.send_static_file("index.html")
 
-@app.route("/data")
+@app.route("/data", methods=['POST', 'GET'])
 @crossdomain(origin='*')
 def data():
-    conn = sqlite3.connect("data.db")
-    c = conn.cursor()
-    data = []
-    for row in c.execute('SELECT * from records'):
-        data.append({"date": row[0], "value": row[1]})
+    if request.method == "GET":
+        conn = sqlite3.connect("data.db")
+        c = conn.cursor()
+        data = []
+        for row in c.execute('SELECT * from records ORDER BY date ASC'):
+            data.append({"date": row[0], "value": row[1]})
 
-    return Response(json.dumps(data), content_type="application/json")
+        return Response(json.dumps(data), content_type="application/json")
 
+    if request.method == "POST":
+        conn = sqlite3.connect("data.db")
+        c = conn.cursor()
+        data = request.json
+        c.execute("INSERT INTO records VALUES (?, ?)", (data['date'], toMilisecs(seconds=data['value'])))
+        conn.commit()
+        return "Done"
 
 
 if __name__ == "__main__":

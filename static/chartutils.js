@@ -54,3 +54,12 @@ var twoDFormat = function(num) {
 
   return negative ? "-" + s : s;
 }
+
+Array.prototype.contains = function (elm) {
+  for (var i=0; i < this.length; i++) {
+    if (this[i] == elm) {
+      return true;
+    }
+  }
+  return false;
+}

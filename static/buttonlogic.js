@@ -1,7 +1,7 @@
 var startStopFun = function () {
 	var elm = document.getElementById("startStop");
 	var txt = elm.textContent;
-	if (txt == "START") {
+	if (txt == "START" && validateStartCondition()) {
 		startTimer();
 		elm.textContent = "STOP";
 	} else if (txt == "STOP") {
